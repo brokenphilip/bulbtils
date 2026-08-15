@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <iterator>
 
-namespace bulbtils
+namespace bulbtils::string
 {
     // Wrapper for string literals, primarily used for template arguments
     template <size_t N>

@@ -3,7 +3,7 @@
 #include <chrono>
 #include <string>
 
-namespace bulbtils
+namespace bulbtils::time
 {
 	// Stopwatch used for measuring elapsed time
 	class stopwatch
