@@ -8,7 +8,6 @@ namespace bulbtils::file
 	result base::load(const settings& load_settings)
 	{
 		auto& filename = load_settings.filename;
-		auto log = load_settings.log;
 
 		if (!std::filesystem::exists(filename))
 		{
@@ -21,7 +20,8 @@ namespace bulbtils::file
 
 				// copy settings for saving defaults, but use our own logs instead (if enabled)
 				settings save_settings = load_settings;
-				save_settings.log = false;
+				save_settings.warning_callback = {};
+				save_settings.error_callback = {};
 
 				auto result = save(save_settings);
 				if (load_settings.error_callback)
@@ -82,13 +82,12 @@ namespace bulbtils::file
 	result base::save(const settings& save_settings) const
 	{
 		auto& filename = save_settings.filename;
-		auto log = save_settings.log;
 
 		if (!std::filesystem::exists(filename) && !save_settings.create_if_not_found)
 		{
-			if (load_settings.error_callback)
+			if (save_settings.error_callback)
 			{
-				load_settings.error_callback(std::format("Error saving '{}' - file not found", filename));
+				save_settings.error_callback(std::format("Error saving '{}' - file not found", filename));
 			}
 			return r_file_not_found;
 		}
@@ -96,18 +95,18 @@ namespace bulbtils::file
 		std::ofstream file(filename);
 		if (!file)
 		{
-			if (load_settings.error_callback)
+			if (save_settings.error_callback)
 			{
-				load_settings.error_callback(std::format("Error saving '{}' - failed to open file", filename));
+				save_settings.error_callback(std::format("Error saving '{}' - failed to open file", filename));
 			}
 			return r_open_file_error;
 		}
 
 		if (!(file << save_from_struct(save_settings)))
 		{
-			if (load_settings.error_callback)
+			if (save_settings.error_callback)
 			{
-				load_settings.error_callback(std::format("Error saving '{}' - failed to write to file", filename));
+				save_settings.error_callback(std::format("Error saving '{}' - failed to write to file", filename));
 			}
 			return r_write_error;
 		}
@@ -148,10 +147,10 @@ namespace bulbtils::file
 		static const std::vector<std::string> levels { "b", "kib", "mib", "gib", "tib", "pib" };
 
 		auto split = bulbtils::string::split_by_whitespace(string);
-		auto size = split.size();
-		if (size != 2)
+		auto count = split.size();
+		if (count != 2)
 		{
-			throw std::invalid_argument(std::format("String '{}' is invalid: expected 2 tokens, got {}", string, size));
+			throw std::invalid_argument(std::format("String '{}' is invalid: expected 2 tokens, got {}", string, count));
 		}
 
 		double size = std::stod(split[0]);
@@ -160,16 +159,17 @@ namespace bulbtils::file
 			throw std::invalid_argument(std::format("String '{}' is invalid: size cannot be below 0", string));
 		}
 
-		auto level = bulbtils::string::inplace::to_lowercase(split[1]);
+		bulbtils::string::inplace::to_lowercase(split[1]);
+
 		double multiplier = 1.0;
 		for (int i = 0; i < levels.size(); i++)
 		{
-			if (level == levels[i])
+			if (split[1] == levels[i])
 			{
 				return size * multiplier;
 			}
 			multiplier *= 1024.0;
 		}
-		throw std::invalid_argument(std::format("String '{}' is invalid: unrecognized level '{}'", string, level));
+		throw std::invalid_argument(std::format("String '{}' is invalid: unrecognized level '{}'", string, split[1]));
 	}
 }

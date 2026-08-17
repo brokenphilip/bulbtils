@@ -2,6 +2,7 @@
 
 #include <format>
 #include <filesystem>
+#include <functional>
 
 namespace bulbtils::file
 {
