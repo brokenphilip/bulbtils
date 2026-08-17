@@ -37,12 +37,12 @@ namespace bulbtils::file
 	struct base
 	{
 		// Use this function to convert your data structure to a string, which will be written to a file
-		virtual std::string save_from_struct() const = 0;
+		virtual std::string save_from_struct(const settings& save_settings) const = 0;
 
 		// Use this function to convert the string data loaded from a file to your data structure
 		// Return false to pass 's_parse_error' to the load() function
 		// (if you're okay with partial loads, particularly if you make use of default values, return true)
-		virtual bool load_to_struct(const std::string& data) = 0;
+		virtual bool load_to_struct(const std::string& data, const settings& load_settings) = 0;
 
 		// Load data structure from file, based on load settings. On success, returns 'r_success' - on failure, returns:
 		// - 'r_open_file_error' if it failed to open the file for reading (or writing default data)
@@ -59,7 +59,15 @@ namespace bulbtils::file
 		result save(const settings& save_settings) const;
 	};
 
+	// Given a path to a folder, get its size in bytes
+	// Can throw OS I/O exceptions
 	uintmax_t get_folder_size(const std::filesystem::path& folder);
 
-	std::string size_to_string(uintmax_t size_in_bytes);
+	// Convert a size in bytes to its string representation
+	// Ranges from bytes (B) to petibytes (PiB)
+	std::string size_to_string(uintmax_t size_in_bytes, int decimals = 2);
+
+	// Convert a string representation of size to bytes
+	// Can throw invalid_argument and out_of_range
+	uintmax_t string_to_size(const std::string& string);
 }

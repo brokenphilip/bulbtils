@@ -1,4 +1,5 @@
 #include <bulbtils/file.h>
+#include <bulbtils/string.h>
 
 #include <fstream>
 
@@ -67,7 +68,7 @@ namespace bulbtils::file
 			return r_read_error;
 		}
 
-		if (!load_to_struct(data))
+		if (!load_to_struct(data, load_settings))
 		{
 			if (load_settings.error_callback)
 			{
@@ -102,7 +103,7 @@ namespace bulbtils::file
 			return r_open_file_error;
 		}
 
-		if (!(file << save_from_struct()))
+		if (!(file << save_from_struct(save_settings)))
 		{
 			if (load_settings.error_callback)
 			{
@@ -116,32 +117,59 @@ namespace bulbtils::file
 	uintmax_t get_folder_size(const std::filesystem::path& folder)
 	{
 		uintmax_t size = 0;
-		if (std::filesystem::exists(folder) && std::filesystem::is_directory(folder))
+		for (auto& entry : std::filesystem::recursive_directory_iterator(folder))
 		{
-			for (auto& entry : std::filesystem::recursive_directory_iterator(folder))
+			if (entry.is_regular_file())
 			{
-				if (entry.is_regular_file())
-				{
-					size += entry.file_size();
-				}
+				size += entry.file_size();
 			}
 		}
 		return size;
 	}
 
-	std::string size_to_string(uintmax_t size_in_bytes)
+	std::string size_to_string(uintmax_t size_in_bytes, int decimals)
 	{
-		double size = size_in_bytes;
-		static const std::vector<std::string> levels { "", "Ki", "Mi", "Gi", "Ti" };
+		static const std::vector<std::string> levels { "B", "KiB", "MiB", "GiB", "TiB" };
 
+		double size = size_in_bytes;
 		for (int i = 0; i < levels.size(); i++)
 		{
 			if (size < 1'024.0)
 			{
-				return std::format("{:.2f} {}B", size, levels[i]);
+				return std::format("{:.{}f} {}", size, decimals, levels[i]);
 			}
 			size /= 1'024.0;
 		}
-		return std::format("{:.2f} PiB", size);
+		return std::format("{:.{}f} PiB", size, decimals);
+	}
+
+	uintmax_t string_to_size(const std::string& string)
+	{
+		static const std::vector<std::string> levels { "b", "kib", "mib", "gib", "tib", "pib" };
+
+		auto split = bulbtils::string::split_by_whitespace(string);
+		auto size = split.size();
+		if (size != 2)
+		{
+			throw std::invalid_argument(std::format("String '{}' is invalid: expected 2 tokens, got {}", string, size));
+		}
+
+		double size = std::stod(split[0]);
+		if (size < 0.0)
+		{
+			throw std::invalid_argument(std::format("String '{}' is invalid: size cannot be below 0", string));
+		}
+
+		auto level = bulbtils::string::inplace::to_lowercase(split[1]);
+		double multiplier = 1.0;
+		for (int i = 0; i < levels.size(); i++)
+		{
+			if (level == levels[i])
+			{
+				return size * multiplier;
+			}
+			multiplier *= 1024.0;
+		}
+		throw std::invalid_argument(std::format("String '{}' is invalid: unrecognized level '{}'", string, level));
 	}
 }
