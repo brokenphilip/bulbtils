@@ -39,6 +39,12 @@ namespace bulbtils::file
 			return r_file_not_found;
 		}
 
+		if (!std::filesystem::is_regular_file(filename))
+		{
+			load_settings.error(std::format("Error loading '{}' - not a regular file", filename));
+			return r_type_error;
+		}
+
 		std::ifstream config_file(filename);
 		if (!config_file)
 		{
@@ -66,10 +72,35 @@ namespace bulbtils::file
 	{
 		auto& filename = save_settings.filename;
 
-		if (!std::filesystem::exists(filename) && !save_settings.create_if_not_found)
+		if (!std::filesystem::exists(filename))
 		{
-			save_settings.error(std::format("Error saving '{}' - file not found", filename));
-			return r_file_not_found;
+			if (!save_settings.create_if_not_found)
+			{
+				save_settings.error(std::format("Error saving '{}' - file not found", filename));
+				return r_file_not_found;
+			}
+
+			// create a path to the file if one doesn't exist yet
+			std::filesystem::path path = filename;
+			auto parent_path = path.parent_path();
+			if (!parent_path.empty())
+			{
+				try
+				{
+					std::filesystem::create_directories(parent_path);
+				}
+				catch (std::exception& e)
+				{
+					save_settings.error(std::format("Error saving '{}' - failed to create path directories ({})", filename, e.what()));
+					return r_directory_error;
+				}
+			}
+		}
+
+		if (!std::filesystem::is_regular_file(filename))
+		{
+			save_settings.error(std::format("Error saving '{}' - not a regular file", filename));
+			return r_type_error;
 		}
 
 		std::ofstream file(filename);
@@ -89,6 +120,11 @@ namespace bulbtils::file
 
 	uintmax_t get_folder_size(const std::filesystem::path& folder)
 	{
+		if (!std::filesystem::is_directory(folder))
+		{
+			return 0;
+		}
+
 		uintmax_t size = 0;
 		for (auto& entry : std::filesystem::recursive_directory_iterator(folder))
 		{

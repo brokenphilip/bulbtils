@@ -12,7 +12,7 @@ namespace bulbtils::file
 		// Name of the file being saved, relative to the current directory
 		std::string filename = "";
 
-		// Should files be created if they aren't found?
+		// Should files and folders be created if they aren't found?
 		// If used with load(), a file containing default data will be created.
 		bool create_if_not_found = false;
 
@@ -38,6 +38,8 @@ namespace bulbtils::file
 		r_read_error,
 		r_write_error,
 		r_parse_error,
+		r_directory_error,
+		r_type_error,
 	};
 
 	// Base file structure, which can save (or load) string data to (or from) a file
@@ -57,12 +59,15 @@ namespace bulbtils::file
 		// - 'r_read_error' if it failed to read the file
 		// - 'r_file_not_found' if the file was not found (default data will be written if create_if_not_found is enabled)
 		// - 'r_parse_error' if the data couldn't be parsed (load_to_struct returned false)
+		// - 'r_type_error' if filename points to something that isn't a file
 		result load(const settings& load_settings);
 
 		// Load data structure from file, based on load settings. On success, returns 'r_success' - on failure, returns:
 		// - 'r_open_file_error' if it failed to open the file for writing
 		// - 'r_write_error' if it failed to write contents to the file
 		// - 'r_file_not_found' if the file was not found and create_if_not_found is disabled
+		// - 'r_directory_error' if it failed to create the required path directories
+		// - 'r_type_error' if filename points to something that isn't a file
 		result save(const settings& save_settings) const;
 	};
 
