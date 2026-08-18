@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <algorithm>
+#include <algorithm> // std::ranges::transform
 #include <iterator>
 
 namespace bulbtils::string

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <format>
-#include <filesystem>
+#include <string>
 #include <functional>
+#include <filesystem>
 
 namespace bulbtils::file
 {
@@ -21,6 +21,12 @@ namespace bulbtils::file
 
         // Callback which receives errors for logging purposes
         std::function<void(const std::string&)> error_callback = {};
+
+		// Logging helper function - if a warning callback is provided, call it
+		inline void warning(const std::string& message) const { if (warning_callback) warning_callback(message); }
+
+		// Logging helper function - if an error callback is provided, call it
+		inline void error(const std::string& message) const { if (error_callback) error_callback(message); }
 	};
 
 	// Enum for results returned by file::base::load/save

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <chrono>
-#include <string>
 
 namespace bulbtils::time
 {
@@ -25,7 +24,7 @@ namespace bulbtils::time
 			}
 		}
 
-		// Stops measuring elapsed time. Elapsed time does not get reset
+		// Stops measuring elapsed time. Elapsed time does NOT get reset
 		// Stopping a stopwatch that is already stopped does nothing
 		inline void stop()
 		{
@@ -83,8 +82,10 @@ namespace bulbtils::time
 
 	// Use this function to run code within an if() statement only when enough time has passed
 	// T can be any unique 'tag' identifier name, eg. "struct any_unique_name_you_like_here"
+	// 
 	// Returns true once "duration" has passed since the previous successful function call
 	// ...ie. since the last time this particular "run_if_passed" returned true
+	// 
 	// NOTE: This function also returns true on the very first function call
 	template <typename T, typename Duration = std::chrono::microseconds>
 	inline bool run_if_passed(Duration duration)
