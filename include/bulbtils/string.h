@@ -2,9 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <sstream>
-#include <algorithm> // std::ranges::transform
-#include <iterator>
 
 namespace bulbtils::string
 {
@@ -23,43 +20,57 @@ namespace bulbtils::string
     };
 
     // Replace all instances of "from" with "to" in "str"
-    inline void replace_all(std::string& str, const std::string& from, const std::string& to)
-    {
-        if (from.empty())
-        {
-            return;
-        }
-
-        size_t start_pos = 0;
-        while ((start_pos = str.find(from, start_pos)) != std::string::npos)
-        {
-            str.replace(start_pos, from.length(), to);
-            start_pos += to.length();
-        }
-    }
+    void replace_all(std::string& str, const std::string& from, const std::string& to);
 
     // Split "str" into individual tokens, by any amount of whitespace
-    inline std::vector<std::string> split_by_whitespace(const std::string& str)
-    {
-        std::istringstream iss(str);
-        return { (std::istream_iterator<std::string>(iss)), std::istream_iterator<std::string>() };
-    }
+    std::vector<std::string> split_by_whitespace(const std::string& str);
+
+    // Split "str" into parameters, following these rules:
+    // 1. Each parameter is separated by whitespace, unless it is being grouped (read below)
+    // 2. Parameters are grouped using a matching identical pair of grouping characters
+    //    a) By default, these are single (') and double (") quotations
+    //    b) An opening grouping character must only be found at the beginning of a parameter
+    //       ...which is either at the beginning of the input "str", or after whitespace
+    //    c) A closing grouping character must only be found at the end of a parameter
+    //       ...which is either at the end of the input "str", or before whitespace
+    //    d) Whitespace characters and the null terminator (\0) cannot be used as grouping characters
+    //    e) Grouping characters cannot be found "standalone" (ie. without a matching grouping character)
+    //       ...unless they're being grouped using a matching pair of different grouping characters
+    //    f) Parameter groups cannot be found "left open" - each must have a matching closing grouping character
+    //
+    // Examples of how various {input}s convert to various [output]s and their (parameter)s:
+    // 
+    // {foo bar} -> [ (foo)  (bar) ]
+    // {foo    bar} -> [ (foo)  (bar) ]
+    // {foo          bar} -> [ (foo)  (bar) ]
+    // {foo bar          } -> [ (foo)  (bar) ]
+    // {          foo bar} -> [ (foo)  (bar) ]
+    // {"foo bar"} -> [ (foo bar) ]
+    // {'foo bar'} -> [ (foo bar) ]
+    // {""} -> [ () ]
+    // {''} -> [ () ]
+    // {foo '' "" bar} -> [ (foo)  ()  ()  (bar) ]
+    // {foo "bar baz"} -> [ (foo)  (bar baz) ]
+    // {'foo bar' baz} -> [ (foo bar)  (baz) ]
+    // {"foo bar" 'baz qux'} -> [ (foo bar)  (baz qux) ]
+    // {"foo'bar" 'baz"qux'} -> [ (foo'bar)  (baz"qux) ]
+    // {"foo 'bar baz' qux"} -> [ (foo 'bar baz' qux) ]
+    // {foo     "bar     baz     "     qux} -> [ (foo)  (bar     baz     )  (qux) ]
+    // {foo   "   bar baz   "   qux} -> [ (foo)  (   bar baz   )  (qux) ]
+    // {foo"bar} -> [ ERROR: Stray opening grouping character `"` (34, 0x22) at position 3 ]
+    // {"foo"bar} -> [ ERROR: Stray closing grouping character `"` (34, 0x22) at position 4 ]
+    // {foo'bar'} -> [ ERROR: Stray opening grouping character `'` (39, 0x27) at position 3 ]
+    // {"foo bar} -> [ ERROR: Stray grouping character `"` (34, 0x22) was left open ]
+    // {'foo bar} -> [ ERROR: Stray grouping character `'` (39, 0x27) was left open ]
+    std::vector<std::string> split_parameters(const std::string& str, const std::initializer_list<char>& grouping_chars = {'"', '\''});
+
 
     namespace inplace
     {
         // Replaces all characters within a string to their lowercase equivalents
-        inline void to_lowercase(std::string& source_dest)
-        {
-            auto to_lowercase_fn = [](unsigned char c) { return std::tolower(c); };
-            std::ranges::transform(source_dest, source_dest.begin(), to_lowercase_fn);
-        }
+        void to_lowercase(std::string& source_dest);
 
         // Removes all extra spaces (and spaces only, NOT other whitespace) from a string
-        inline void remove_extra_spaces(std::string& source_dest)
-        {
-            auto both_are_spaces = [](char lhs, char rhs) { return (lhs == rhs) && (lhs == ' '); };
-            auto new_end = std::unique(source_dest.begin(), source_dest.end(), both_are_spaces);
-            source_dest.erase(new_end, source_dest.end());
-        }
+        void remove_extra_spaces(std::string& source_dest);
     }
 }
