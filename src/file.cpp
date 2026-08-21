@@ -96,8 +96,7 @@ namespace bulbtils::file
 				}
 			}
 		}
-
-		if (!std::filesystem::is_regular_file(filename))
+		else if (!std::filesystem::is_regular_file(filename))
 		{
 			save_settings.error(std::format("Error saving '{}' - not a regular file", filename));
 			return r_type_error;
