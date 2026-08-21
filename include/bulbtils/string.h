@@ -64,7 +64,6 @@ namespace bulbtils::string
     // {'foo bar} -> [ ERROR: Stray grouping character `'` (39, 0x27) was left open ]
     std::vector<std::string> split_parameters(const std::string& str, const std::initializer_list<char>& grouping_chars = {'"', '\''});
 
-
     namespace inplace
     {
         // Replaces all characters within a string to their lowercase equivalents
